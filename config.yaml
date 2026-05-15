@@ -79,3 +79,12 @@ audit:
   file: "/var/log/mcp-shield/audit.jsonl"
   log_arguments: true
   log_responses: true
+
+# Network egress monitoring
+egress:
+  enabled: true
+  scan_interval_seconds: 30
+  allowed_hosts:
+    - "registry.npmjs.org"
+    - "pypi.org"
+    - "api.github.com"

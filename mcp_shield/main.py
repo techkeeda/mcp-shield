@@ -70,10 +70,27 @@ async def run(config: dict) -> None:
 
     update_task = asyncio.create_task(periodic_update())
 
+    # Schedule egress monitoring (every 30s)
+    async def periodic_egress_scan():
+        while True:
+            await asyncio.sleep(30)
+            violations = proxy.egress_monitor.scan()
+            for v in violations:
+                audit.log_event(
+                    "egress_violation",
+                    server=v.server_name,
+                    remote_ip=v.remote_ip,
+                    remote_port=v.remote_port,
+                    pid=v.pid,
+                )
+
+    egress_task = asyncio.create_task(periodic_egress_scan())
+
     try:
         await proxy.handle_stdio()
     finally:
         update_task.cancel()
+        egress_task.cancel()
         proxy.stop()
         baseline.save(BASELINE_PATH)
 

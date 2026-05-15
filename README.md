@@ -15,22 +15,38 @@ MCP (Model Context Protocol) connects AI agents to external tools — but with 1
 ## How MCP Shield Works
 
 ```
-┌──────────┐     ┌─────────────┐     ┌────────────┐
-│ AI Agent │────▶│  MCP Shield │────▶│ MCP Server │
-└──────────┘     └─────────────┘     └────────────┘
-                       │
-                 ┌─────┴──────┐
-                 │  Policies  │
-                 │  AI Model  │
-                 │  Threat DB │
-                 └────────────┘
+┌──────────┐         ┌──────────────────────────────────────────────┐         ┌────────────┐
+│          │         │                MCP Shield                     │         │            │
+│ AI Agent │──stdio──▶  ┌───────────┐ ┌───────────┐ ┌───────────┐  │──stdio──▶ MCP Server │
+│          │◀─────────  │ Discovery │ │Invocation │ │ Response  │  │◀─────────│            │
+└──────────┘         │  │   Gate    │ │   Gate    │ │   Gate    │  │         └─────┬──────┘
+                     │  └─────┬─────┘ └─────┬─────┘ └─────┬─────┘  │               │
+                     │        │             │             │          │               │
+                     │  ┌─────┴─────────────┴─────────────┴───────┐ │         ┌─────┴──────┐
+                     │  │  Policy Engine │ Threat DB │ Baseline    │ │         │  Egress    │
+                     │  └─────────────────────────────────────────┘ │         │  Monitor   │
+                     │                                               │         │ (watches   │
+                     │  ┌───────────────────┐  ┌─────────────────┐  │         │  network)  │
+                     │  │  Supply Chain     │  │   Mothership    │  │         └────────────┘
+                     │  │  Monitor          │  │   Updater       │  │               │
+                     │  └───────────────────┘  └─────────────────┘  │               │
+                     │                               │               │          ✗ BLOCKED
+                     └───────────────────────────────┼───────────────┘          if calling
+                                                     │                          evil.com
+                                                     ▼
+                                              ┌─────────────┐
+                                              │  Mothership  │
+                                              │  (threat     │
+                                              │   updates)   │
+                                              └─────────────┘
 ```
 
-**Three enforcement points:**
+**Four enforcement layers:**
 
 1. **Discovery Gate** — Inspects tool listings before the agent sees them. Detects poisoned descriptions, hidden instructions, and suspicious schemas.
 2. **Invocation Gate** — Validates every tool call against policy before execution. Blocks dangerous arguments, rate-limits sensitive operations.
 3. **Response Gate** — Scans tool responses for data leakage, injected prompts, and unexpected payloads.
+4. **Egress Monitor** — Watches MCP server processes for unauthorized outbound network connections. Catches tools that look legitimate but phone home to attacker infrastructure.
 
 ## Features
 
@@ -38,6 +54,7 @@ MCP (Model Context Protocol) connects AI agents to external tools — but with 1
 - 🧠 **AI Analyzer** — Detects prompt injection and social engineering in tool descriptions
 - 🔒 **Argument Sanitizer** — Blocks shell injection, path traversal, credential exposure
 - 📊 **Behavioral Baseline** — Learns normal tool usage patterns, flags anomalies
+- 🌐 **Egress Monitor** — Detects MCP servers making unauthorized outbound connections
 - 🔄 **Mothership Updates** — Auto-pulls latest threat signatures for known-bad MCP servers
 - 🪝 **Supply Chain Monitor** — Detects when a previously-safe server changes behavior
 - 📋 **Audit Log** — Full trace of every tool discovery, call, and response
@@ -76,10 +93,12 @@ mcp_shield/
 │   ├── discovery.py   # Inspects tool listings for poisoning
 │   ├── invocation.py  # Validates tool calls against policy
 │   └── response.py    # Scans responses for leaks/injection
-├── analyzer.py        # AI-powered threat analysis
 ├── policy.py          # Policy engine (YAML rules)
 ├── baseline.py        # Behavioral anomaly detection
+├── egress_monitor.py  # Watches server processes for unauthorized network calls
+├── supply_chain.py    # Detects when servers change behavior
 ├── threat_db.py       # Known-bad servers, hashes, patterns
 ├── updater.py         # Mothership auto-update
+├── audit.py           # JSONL audit trail
 └── main.py            # Entry point
 ```

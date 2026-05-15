@@ -13,6 +13,7 @@ from .gates.response import ResponseGate
 from .policy import Action
 from .baseline import BaselineEngine
 from .supply_chain import SupplyChainMonitor
+from .egress_monitor import EgressMonitor
 from .audit import AuditLog
 
 logger = logging.getLogger(__name__)
@@ -70,6 +71,7 @@ class MCPProxy:
         baseline: BaselineEngine,
         supply_chain: SupplyChainMonitor,
         audit: AuditLog,
+        egress_monitor: EgressMonitor | None = None,
     ):
         self.upstreams: dict[str, UpstreamServer] = {}
         self.discovery_gate = discovery_gate
@@ -78,6 +80,7 @@ class MCPProxy:
         self.baseline = baseline
         self.supply_chain = supply_chain
         self.audit = audit
+        self.egress_monitor = egress_monitor or EgressMonitor()
         self._tool_to_server: dict[str, str] = {}
 
         for name, cfg in upstream_configs.items():
@@ -91,6 +94,9 @@ class MCPProxy:
     async def start(self) -> None:
         for server in self.upstreams.values():
             await server.start()
+            # Track server process for egress monitoring
+            if server._process:
+                self.egress_monitor.track_process(server._process.pid, server.name)
         await self._discover_tools()
 
     async def _discover_tools(self) -> None:
