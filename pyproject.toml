@@ -1,0 +1,39 @@
+[project]
+name = "mcp-shield"
+version = "0.1.0"
+description = "AI-powered MCP security gateway — protects AI agents from tool poisoning, data exfiltration, and supply chain attacks"
+requires-python = ">=3.11"
+readme = "README.md"
+license = {text = "MIT"}
+keywords = ["mcp", "security", "ai", "agent", "firewall", "tool-poisoning"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+]
+authors = [
+    {name = "Nilesh Valmik Ladhe", email = "worknileshladhe@gmail.com"},
+]
+dependencies = [
+    "mcp==1.9.0",
+    "aiohttp==3.9.5",
+    "pyyaml==6.0.1",
+    "cryptography==42.0.8",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.2.2",
+    "pytest-asyncio==0.23.7",
+]
+
+[project.scripts]
+mcp-shield = "mcp_shield.main:main"
+
+[project.urls]
+Homepage = "https://github.com/YOUR_USERNAME/mcp-shield"
+Documentation = "https://github.com/YOUR_USERNAME/mcp-shield/tree/main/docs"
+Issues = "https://github.com/YOUR_USERNAME/mcp-shield/issues"

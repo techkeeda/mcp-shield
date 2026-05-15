@@ -1,0 +1,32 @@
+upstream_servers:
+  filesystem:
+    command: npx
+    args: ["@modelcontextprotocol/server-filesystem", "/home/user"]
+
+policies:
+  default:
+    action: allow
+  tools:
+    read_file:
+      action: allow
+      constraints:
+        blocked_paths:
+          - "~/.ssh/*"
+          - "~/.aws/*"
+          - "~/.env"
+          - "/etc/shadow"
+          - "/etc/passwd"
+          - "**/*.pem"
+          - "**/*.key"
+    write_file:
+      action: ask
+    delete_file:
+      action: deny
+
+invocation:
+  block_path_traversal: true
+  block_shell_injection: true
+
+audit:
+  enabled: true
+  file: "./audit.jsonl"

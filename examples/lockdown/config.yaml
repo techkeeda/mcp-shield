@@ -1,0 +1,37 @@
+upstream_servers:
+  filesystem:
+    command: npx
+    args: ["@modelcontextprotocol/server-filesystem", "/home/user/sandbox"]
+
+policies:
+  default:
+    action: deny
+  tools:
+    read_file:
+      action: allow
+      constraints:
+        blocked_paths: ["~/.ssh/*", "~/.aws/*", "/etc/*"]
+    list_files:
+      action: allow
+
+discovery:
+  block_hidden_instructions: true
+  max_description_length: 500
+
+invocation:
+  block_shell_injection: true
+  block_path_traversal: true
+  block_credential_patterns: true
+  rate_limit:
+    max_calls_per_minute: 10
+    max_calls_per_tool_per_minute: 5
+
+response:
+  scan_for_injection: true
+  scan_for_data_leakage: true
+
+audit:
+  enabled: true
+  file: "./audit.jsonl"
+  log_arguments: true
+  log_responses: true

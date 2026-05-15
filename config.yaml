@@ -1,0 +1,81 @@
+# Upstream MCP servers that Shield proxies
+upstream_servers:
+  filesystem:
+    command: npx
+    args: ["@modelcontextprotocol/server-filesystem", "/home/user/projects"]
+  github:
+    command: npx
+    args: ["@modelcontextprotocol/server-github"]
+    env:
+      GITHUB_TOKEN_ENV: "GITHUB_TOKEN"
+
+# Mothership for threat intelligence updates
+mothership:
+  url: "https://shield-mothership.example.com/api/v1"
+  update_interval_seconds: 3600
+  auth_token_env: "SHIELD_MOTHERSHIP_TOKEN"
+
+# Policy rules per tool
+policies:
+  # Default policy for tools not explicitly listed
+  default:
+    action: ask  # allow | deny | ask
+    log: true
+
+  # Explicit tool policies
+  tools:
+    read_file:
+      action: allow
+      constraints:
+        blocked_paths: ["/etc/shadow", "/etc/passwd", "~/.ssh/*", "~/.aws/*"]
+
+    write_file:
+      action: ask
+      constraints:
+        blocked_paths: ["/etc/*", "/usr/*", "/bin/*"]
+
+    execute_command:
+      action: deny
+
+    send_email:
+      action: ask
+      constraints:
+        block_bcc: true  # Postmark-style supply chain attack prevention
+
+# Discovery gate settings
+discovery:
+  block_hidden_instructions: true
+  max_description_length: 2000
+  suspicious_patterns:
+    - "ignore previous"
+    - "do not tell the user"
+    - "secretly"
+    - "override"
+    - "system prompt"
+    - "<IMPORTANT>"
+
+# Invocation gate settings
+invocation:
+  block_shell_injection: true
+  block_path_traversal: true
+  block_credential_patterns: true
+  rate_limit:
+    max_calls_per_minute: 30
+    max_calls_per_tool_per_minute: 10
+
+# Response gate settings
+response:
+  scan_for_injection: true
+  scan_for_data_leakage: true
+  sensitive_patterns:
+    - "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b"  # emails
+    - "\\b\\d{3}-\\d{2}-\\d{4}\\b"  # SSN
+    - "AKIA[0-9A-Z]{16}"  # AWS access key
+    - "sk-[a-zA-Z0-9]{48}"  # OpenAI key
+
+# Audit logging
+audit:
+  enabled: true
+  file: "/var/log/mcp-shield/audit.jsonl"
+  log_arguments: true
+  log_responses: true
